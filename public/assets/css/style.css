@@ -1,0 +1,13 @@
+header {
+    min-height: 550px;
+    padding-top: 10rem;
+    padding-bottom: calc(10rem - 56px);
+    background-image: url(/assets/img/newspaper.jpg);
+    background-position: center center;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+    text-align: center;
+    text-shadow: -2px 1px 12px lightgrey;
+}
