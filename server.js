@@ -12,7 +12,7 @@ var axios = require("axios");
 //Require all models
 var db = require('./models');
 
-var PORT = 3000;
+var PORT = process.env.PORT || 3000;
 
 // Initialize Express
 var app = express();
@@ -27,7 +27,9 @@ app.engine("handlebars", exphbs({ defaultLayout: "main" }));
 app.set('view engine', 'handlebars');
 
 // Connect to the Mongo DB
-mongoose.connect("mongodb://localhost/webScraper");
+var MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost/webScraper";
+mongoose.Promise = Promise;
+mongoose.connect(MONGODB_URI);
 
 // Begin routes
 app.get("/", function(req, res) {
@@ -104,6 +106,16 @@ app.post("/saved/:id", function(req, res) {
     })
 });
 
+app.post("/unsaved/:id", function(req, res) {   // Delete article from saved
+    console.log(req.params)
+    db.Article.findOneAndUpdate({_id: req.params.id}, {saved: false}, {new: false})
+    .then(function(dbArticle){
+        res.json(dbArticle);
+    })
+    .catch(function(err){
+        res.json(err)
+    })
+});
 
 //Post new note
 app.post("/articles/:id", function(req, res) {
