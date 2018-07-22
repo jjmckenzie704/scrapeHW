@@ -27,50 +27,74 @@ app.engine("handlebars", exphbs({ defaultLayout: "main" }));
 app.set('view engine', 'handlebars');
 
 // Connect to the Mongo DB
-mongoose.connect("mongodb://localhost/mongohw");
+mongoose.connect("mongodb://localhost/webScraper");
 
-//Routes here
-
+// Begin routes
 app.get("/", function(req, res) {
-    res.render("index")
-    console.log('hi')
-})
-//Scrape articles
-app.get("/scrape", function(req, res) {
-    axios.get("https://www.nytimes.com/").then(function(response){
-        var $ = cheerio.load(response.data);
-
-        //Grab specific elements
-        $("article").each(function(i, element) {
-            var result = {};
-            //Add text & href of every link
-            result.title = $(this).children("h2").children("a").text();
-            result.link = $(this).children("h2").children("a").attr("href");
-            result.summary = $(this).children("p.summary").text();
-            
-            //Create an entry on my database
-
-            db.Article.create(result).then(function(dbArticle) {
-                console.log(dbArticle)
-            }).catch(function(err) {
-                return res.json(err);
-            })
-        });
-        //Confirm it has completed
-        console.log("Scrape Complete");
+    db.Article.find({}, function(error, data) {   // Grab every document in the Articles collection
+        var hbsObject = {
+            article: data   // Attach every document to the article object
+        }
+        res.render('index', hbsObject);  // Render index and pass in the article object
+    }).catch(function(err) {   // If an error occurred, send it to the client
+        res.json(err);
     });
 });
 
+app.get("/empty", function(req, res) {
+    db.Article.deleteMany({}, function(error, data) {
+        console.log('Article database has been emptied!');
+    }).then(function() {
+        db.Note.deleteMany({}, function(error, data) {
+            console.log('Notes database has been emptied!');
+            res.render("index", data)
+        })
+    })    
+});
+
+// Scrape articles
+app.get("/scrape", function(req, res) {
+    db.Article.deleteMany({}).then(function(result) {   // Clear out the database, start fresh
+        console.log(result);
+        console.log('Database has been emptied!');
+        axios.get("https://www.nytimes.com/").then(function(response) {
+            console.log('Scraping has begun');
+            var $ = cheerio.load(response.data);
+            $("article").each(function(i, element) {   // Grab specific elements
+                var result = {};
+                result.title = $(this).children("h2").children("a").text();   // Article title
+                result.link = $(this).children("h2").children("a").attr("href");   // Article url
+                result.summary = $(this).children("p.summary").text();   // Article summary
+                db.Article.create(result).then(function(dbArticle) {   // Create an entry on the articles collection
+                    // console.log(dbArticle)
+                }).catch(function(err) {
+                    // console.log('===========================================');
+                    // console.log(err);
+                    // console.log('===========================================');
+                })
+            });
+            console.log("Scrape Complete");  // Confirm process is complete
+            res.render("index")
+        });
+    });
+});
 
 //Get all Saved Articles from the db
 app.get("/saved", function (req, res){
-    db.Article.find({saved:true}).then(function(dbArticle){
-        res.render("saved", {dbArticle})
+    // console.log(req)
+    db.Article.find({saved:true}, function(error, data){
+        console.log(data);
+        var hbsObject = {
+            article: data
+        }
+        console.log(hbsObject)
+        res.render("saved", hbsObject)
     })
 })
 
 //Post new saved articles
-app.post("/saved", function(req, res) {
+app.post("/saved/:id", function(req, res) {
+    console.log(req.params)
     db.Article.findOneAndUpdate({_id: req.params.id}, {saved: true}, {new: false})
     .then(function(dbArticle){
         res.json(dbArticle);
@@ -80,22 +104,50 @@ app.post("/saved", function(req, res) {
     })
 });
 
+
 //Post new note
-app.post("/articles/:id", function(req,res){
-    db.Note.create(req.body).then(function(dbNote){
-        return db.Article.findOneAndUpdate({_id: req.params.id }, {note: dbNote._id}, {new: true});
-    })
-    .then(function(dbArticle) {
+app.post("/articles/:id", function(req, res) {
+    db.Note.create(req.body).then(function(dbNote) {
+        return db.Article.findOneAndUpdate({_id: req.params.id }, { $push: { notes: dbNote._id}}, {new: true});
+    }).then(function(dbArticle) {
         res.json(dbArticle);
-    })
-    .catch(function(err) {
+    }).catch(function(err) {
         res.json(err)
     })
-})
+});
+
+// Deleting a note
+app.post("/deletenote/", function(req, res) {
+    console.log('Hello World!');
+    console.log(req.body);
+    db.Note.remove({ 
+        _id: req.body.id   // To Do: Also delete the note id from the article's notes array
+    }).then(function(dbNote) {
+        res.json(dbNote);
+    }).catch(function(err) {
+        res.json(err);
+    })
+});
+
+// Route for grabbing a specific Article by id, populate it with it's note
+app.get("/articles/:id", function(req, res) {
+    // Using the id passed in the id parameter, prepare a query that finds the matching one in our db...
+    db.Article.findOne({ _id: req.params.id })
+      // ..and populate all of the notes associated with it
+      .populate("notes")
+      .then(function(dbArticle) {
+        // If we were able to successfully find an Article with the given id, send it back to the client
+        res.json(dbArticle);
+      })
+      .catch(function(err) {
+        // If an error occurred, send it to the client
+        res.json(err);
+      });
+  });
 
 // Start the server
 app.listen(PORT, function() {
-    console.log("App running on port " + PORT + "!");
+    console.log("App running at http://localhost:" + PORT);
 });
   
 module.exports = app;

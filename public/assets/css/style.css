@@ -1,3 +1,37 @@
+nav {
+    background-color: #2196F3;
+    min-height: 70px;
+}
+
+.navbar {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.navbar-nav > .nav-item > a {
+    color: #fff;
+    padding: 20.5px 15px;
+}
+
+.navbar-nav > .nav-item > a:hover {
+    color: black;
+}
+
+.navbar-nav > .active > a {
+    color: #ffffff;
+    background-color: #0c7cd5;
+    border-radius: 0;
+}
+
+.navbar-nav > .active > a:hover {
+    color: black;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+}
+
 header {
     min-height: 550px;
     padding-top: 10rem;
@@ -10,4 +44,73 @@ header {
     background-size: cover;
     text-align: center;
     text-shadow: -2px 1px 12px lightgrey;
+}
+
+#noArticles {
+    text-align: center;
+    background-color: orange;
+    padding: 10px;
+    margin: 10px;
+}
+
+.menu-link {
+    color: black;
+    padding-right: .5rem;
+    padding-left: .5rem;
+    display: block;
+    padding: .5rem 1rem;   
+}
+
+.menu-link:hover {
+    text-decoration: none;
+}
+
+#scrapeNow, #emptyDatabase {
+    color: white;
+    padding: .5rem 1rem;
+}
+
+#scrapeNow:hover, #emptyDatabase:hover {
+    color: black;
+}
+
+.card {
+    margin-left: 15px;
+    margin-right: 15px;
+    margin-bottom: 15px;
+    box-shadow: 3px 3px 20px lightslategrey;
+}
+
+.card-header {
+    color: white;
+    display: flex;
+    justify-content: space-between;
+}
+
+.card-header a {
+    color: white;
+}
+
+.card-header a:hover {
+    color: lightgray;
+    text-decoration: none;
+}
+
+.card-body {
+    color: black;
+}
+
+.disabled {
+    pointer-events: none;
+}
+
+.savedNotes div {
+    display: flex;
+}
+
+.deleteNote {
+    margin-right: 15px;
+    height: 28px;
+    width: 25px;
+    padding: 0px;
 }
